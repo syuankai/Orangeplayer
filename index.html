@@ -2,145 +2,87 @@
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>OrangePlayer Cinema Pro</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Orange Cinema | 旗艦版</title>
+    <link rel="stylesheet" href="style.css">
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
     <script src="https://cdn.jsdelivr.net/npm/artplayer/dist/artplayer.js"></script>
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap');
-        
-        body { 
-            font-family: 'Plus Jakarta Sans', sans-serif; 
-            background: #f2f2f7;
-            color: #1d1d1f;
-            overflow: hidden;
-            height: 100vh;
-            width: 100vw;
-        }
-
-        /* 頂級毛玻璃效果 */
-        .glass-base {
-            background: rgba(255, 255, 255, 0.6);
-            backdrop-filter: blur(40px) saturate(200%);
-            -webkit-backdrop-filter: blur(40px) saturate(200%);
-            border: 1px solid rgba(255, 255, 255, 0.4);
-        }
-
-        /* 側邊欄展開樣式 */
-        .sidebar-expanded { width: 320px; min-width: 320px; }
-        .sidebar-collapsed { width: 96px; min-width: 96px; }
-
-        /* 修正旋轉動畫顏色與樣式 */
-        .modern-loader {
-            width: 50px;
-            height: 50px;
-            border: 4px solid #f3f4f6;
-            border-top: 4px solid #f97316;
-            border-radius: 50%;
-            animation: spin 1s cubic-bezier(0.4, 0, 0.2, 1) infinite;
-        }
-
-        @keyframes spin { to { transform: rotate(360deg); } }
-
-        /* 防止列表撐破容器 */
-        .content-scroll {
-            overflow-y: auto;
-            scrollbar-width: none;
-        }
-        .content-scroll::-webkit-scrollbar { display: none; }
-
-        .transition-all-custom {
-            transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);
-        }
-    </style>
 </head>
-<body class="flex p-4 md:p-6 gap-6">
+<body class="flex h-screen w-screen p-4 md:p-6 gap-6 overflow-hidden">
 
-    <!-- 獨立加載層 -->
-    <div id="loader-layer" class="fixed inset-0 z-[9999] bg-white flex flex-col items-center justify-center transition-opacity duration-700">
-        <div class="modern-loader"></div>
-        <h2 class="mt-6 text-xl font-bold tracking-tighter">系統初始化中...</h2>
-    </div>
+    <div id="app-bg" class="fixed inset-0 z-[-1] transition-all duration-1000"></div>
 
-    <!-- 側邊欄導航 -->
-    <aside id="sidebar" class="sidebar-expanded glass-base rounded-[40px] flex flex-col flex-shrink-0 transition-all-custom shadow-2xl overflow-hidden">
-        <!-- Logo -->
+    <!-- 側邊欄 -->
+    <aside id="sidebar" class="sidebar-expanded glass rounded-[40px] flex flex-col flex-shrink-0 relative z-50 transition-all duration-500 shadow-2xl">
         <div class="p-8 flex items-center gap-4">
-            <div class="w-12 h-12 bg-orange-500 rounded-2xl flex-shrink-0 flex items-center justify-center shadow-lg shadow-orange-500/30">
+            <div class="logo-box flex-shrink-0 bg-orange-500 w-12 h-12 rounded-2xl flex items-center justify-center shadow-lg shadow-orange-500/30">
                 <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"></path></svg>
             </div>
-            <span class="sidebar-text text-2xl font-extrabold tracking-tighter whitespace-nowrap">OrangePlayer</span>
+            <h1 class="sb-content text-2xl font-black tracking-tighter whitespace-nowrap">Orange</h1>
         </div>
 
-        <!-- 萬能解析 -->
-        <div class="px-6 mb-8 sidebar-text">
-            <div class="bg-white/50 rounded-[32px] p-6 border border-white/60">
-                <p class="text-[10px] font-black text-orange-600 uppercase tracking-widest mb-4">萬能連結解析</p>
-                <div class="space-y-3">
-                    <input type="text" id="m3u8-input" placeholder="貼入 m3u8 連結..." class="w-full bg-white/80 border border-white/20 rounded-2xl px-5 py-4 text-sm focus:outline-none focus:ring-4 ring-orange-500/10 transition-all font-medium">
-                    <button onclick="handleQuickPlay()" class="w-full bg-[#1d1d1f] text-white py-4 rounded-2xl font-bold text-sm hover:bg-black active:scale-95 transition-all shadow-lg">解析播放</button>
-                </div>
+        <div class="px-6 mb-8 sb-content">
+            <div class="bg-white/20 p-4 rounded-3xl border border-white/20">
+                <p class="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-3 px-1">快速解析</p>
+                <input type="text" id="quick-url" placeholder="M3U8 / MP4 連結..." class="w-full bg-white/40 border-0 rounded-xl px-4 py-3 text-sm focus:ring-2 ring-orange-500 transition-all placeholder-gray-500">
+                <button onclick="handleQuickPlay()" class="w-full mt-2 bg-orange-600 text-white py-3 rounded-xl font-bold text-xs hover:bg-orange-700 active:scale-95 transition-all">播放</button>
             </div>
         </div>
 
-        <!-- 菜單 -->
-        <nav class="flex-1 px-4 space-y-2 content-scroll">
-            <button onclick="changeTab('search')" id="tab-btn-search" class="w-full flex items-center gap-5 px-6 py-5 rounded-[28px] transition-all-custom bg-white shadow-sm text-orange-600 font-bold">
-                <svg class="w-6 h-6 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
-                <span class="sidebar-text whitespace-nowrap">聚合搜尋</span>
+        <nav class="flex-1 px-4 space-y-2 overflow-y-auto no-scrollbar">
+            <button onclick="switchTab('search')" id="nav-search" class="nav-btn active">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                <span class="sb-content">探索</span>
             </button>
-            <button onclick="changeTab('history')" id="tab-btn-history" class="w-full flex items-center gap-5 px-6 py-5 rounded-[28px] transition-all-custom text-gray-500 font-bold hover:bg-white/40">
-                <svg class="w-6 h-6 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                <span class="sidebar-text whitespace-nowrap">最近播放</span>
+            <button onclick="switchTab('history')" id="nav-history" class="nav-btn">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                <span class="sb-content">歷史</span>
             </button>
         </nav>
 
-        <!-- 摺疊切換與設置 -->
-        <div class="p-6 border-t border-white/20 mt-auto">
-            <button onclick="toggleSidebar()" class="w-full bg-white/40 h-14 rounded-2xl flex items-center justify-center hover:bg-white transition-all shadow-sm group">
-                <svg id="collapse-icon" class="w-6 h-6 text-gray-500 group-hover:text-orange-600 transition-transform duration-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M11 19l-7-7 7-7m8 14l-7-7 7-7"></path></svg>
+        <div class="p-6 border-t border-white/10 flex flex-col gap-3">
+            <button onclick="triggerBgUpload()" class="settings-btn" title="更改背景">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+            </button>
+            <button onclick="toggleSidebar()" class="collapse-btn">
+                <svg id="collapse-icon" class="w-6 h-6 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M11 19l-7-7 7-7m8 14l-7-7 7-7"></path></svg>
             </button>
         </div>
+        <input type="file" id="bg-input" class="hidden" accept="image/*" onchange="uploadBackground(event)">
     </aside>
 
-    <!-- 主內容區 -->
-    <main class="flex-1 flex flex-col min-w-0 h-full gap-6">
-        <!-- 播放器：鎖定比例防止擠壓 -->
-        <section class="relative w-full h-[60%] glass-base rounded-[48px] overflow-hidden shadow-2xl flex-shrink-0">
+    <!-- 主面板 -->
+    <main class="flex-1 flex flex-col gap-6 min-w-0">
+        <!-- 播放器 -->
+        <div class="h-[55%] glass rounded-[48px] overflow-hidden shadow-2xl relative">
             <div id="artplayer" class="w-full h-full bg-black"></div>
-            <!-- 加載遮罩 -->
-            <div id="player-loading" class="absolute inset-0 flex flex-col items-center justify-center bg-[#f2f2f7]/80 backdrop-blur-3xl z-20 hidden">
-                <div class="modern-loader"></div>
-                <p class="mt-6 text-xs font-black text-orange-600 tracking-[0.4em] uppercase">訊號解析中...</p>
+            <div id="player-loading" class="absolute inset-0 flex items-center justify-center bg-black/40 backdrop-blur-md z-10 hidden">
+                <div class="loader"></div>
             </div>
-        </section>
+        </div>
 
-        <!-- 資料展示區 -->
-        <section class="flex-1 glass-base rounded-[48px] shadow-xl overflow-hidden flex flex-col">
+        <!-- 下方內容 -->
+        <div class="flex-1 glass rounded-[48px] overflow-hidden flex flex-col shadow-xl">
             <!-- 搜尋頁面 -->
-            <div id="view-search" class="tab-view h-full flex flex-col p-8">
-                <div class="flex flex-col md:flex-row gap-4 mb-8 flex-shrink-0">
-                    <input type="text" id="search-box" placeholder="輸入影片關鍵字..." class="flex-1 bg-white/60 border border-white/40 rounded-[28px] px-8 py-5 text-lg focus:outline-none focus:ring-4 ring-orange-500/10 font-bold transition-all shadow-sm">
-                    <button onclick="startSearch()" class="bg-[#1d1d1f] text-white px-12 py-5 rounded-[28px] font-extrabold hover:bg-orange-500 hover:shadow-2xl transition-all active:scale-95">
-                        搜尋資源
-                    </button>
+            <div id="view-search" class="view p-8 flex flex-col h-full">
+                <div class="flex gap-4 mb-8">
+                    <input type="text" id="search-keyword" placeholder="搜尋 15+ 資源站..." class="flex-1 bg-white/20 border-0 rounded-2xl px-6 py-4 text-lg focus:ring-4 ring-orange-500/20 font-bold transition-all">
+                    <button onclick="searchAll()" class="bg-[#1d1d1f] text-white px-10 py-4 rounded-2xl font-black hover:bg-orange-600 transition-all">搜尋</button>
                 </div>
-                <!-- 搜尋結果 -->
-                <div id="search-grid" class="flex-1 content-scroll grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-6 gap-5 pb-4">
-                    <div class="col-span-full h-full flex flex-col items-center justify-center opacity-20">
-                        <svg class="w-16 h-16 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
-                        <p class="text-sm font-bold uppercase tracking-widest">請輸入關鍵字開始搜尋</p>
-                    </div>
+                <div id="results-grid" class="flex-1 overflow-y-auto grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 xl:grid-cols-6 gap-4 no-scrollbar">
+                    <!-- 搜尋結果動態加載 -->
                 </div>
             </div>
 
             <!-- 歷史頁面 -->
-            <div id="view-history" class="tab-view h-full hidden p-10 flex flex-col">
-                <h3 class="text-3xl font-black mb-8 flex-shrink-0">最近播放紀錄</h3>
-                <div id="history-grid" class="flex-1 content-scroll grid grid-cols-1 md:grid-cols-3 gap-4"></div>
+            <div id="view-history" class="view hidden p-8 h-full flex flex-col">
+                <h2 class="text-2xl font-black mb-6">播放歷史</h2>
+                <div id="history-grid" class="flex-1 overflow-y-auto grid grid-cols-1 md:grid-cols-3 gap-4 no-scrollbar">
+                    <!-- D1 歷史數據動態加載 -->
+                </div>
             </div>
-        </section>
+        </div>
     </main>
 
     <script src="app.js"></script>
