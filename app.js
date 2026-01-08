@@ -1,45 +1,28 @@
-// 極簡加載解鎖
-(function() {
-    const loader = document.getElementById('loading-screen');
-    const status = document.getElementById('loading-status');
-    
-    let countdown = 0;
-    const interval = setInterval(() => {
-        countdown += 100;
-        if (countdown >= 1500) {
-            status.innerText = "System Ready";
-            loader.style.opacity = '0';
-            loader.style.pointerEvents = 'none';
-            setTimeout(() => {
-                loader.remove();
-                clearInterval(interval);
-            }, 700);
-        }
-    }, 100);
-})();
-
 let art = null;
-const API_ENDPOINTS = [
+const SOURCES = [
     { name: '量子', url: 'https://cj.lziapi.com/api.php/provide/vod/' },
     { name: '索尼', url: 'https://suoniapi.com/api.php/provide/vod/' },
     { name: '非凡', url: 'https://cj.ffzyapi.com/api.php/provide/vod/' },
     { name: '紅牛', url: 'https://www.hongniuzy2.com/api.php/provide/vod/' },
-    { name: '影視', url: 'https://api.yshzyapi.com/api.php/provide/vod/' },
+    { name: '酷點', url: 'https://api.kudianzy.com/api.php/provide/vod/' },
     { name: '暴風', url: 'https://bfzyapi.com/api.php/provide/vod/' },
     { name: '櫻花', url: 'https://m3u8.ykhdm.com/api.php/provide/vod/' },
-    { name: '酷點', url: 'https://api.kudianzy.com/api.php/provide/vod/' }
+    { name: '優酷', url: 'https://api.zyukapi.com/api.php/provide/vod/' },
+    { name: '木耳', url: 'https://api.muerzy.com/api.php/provide/vod/' },
+    { name: '大師', url: 'https://api.dszyapi.com/api.php/provide/vod/' },
+    { name: '極限', url: 'https://api.jiandaozy.com/api.php/provide/vod/' },
+    { name: '快車', url: 'https://caiji.kczyapi.com/api.php/provide/vod/' },
+    { name: '百度', url: 'https://api.apibdzy.com/api.php/provide/vod/' },
+    { name: '臥龍', url: 'https://collect.wolongzyw.com/api.php/provide/vod/' },
+    { name: '虎牙', url: 'https://www.huyaapi.com/api.php/provide/vod/' }
 ];
 
-document.addEventListener('DOMContentLoaded', async () => {
+document.addEventListener('DOMContentLoaded', () => {
     initPlayer();
+    initTheme();
+    loadHistory();
     
-    // 背景與歷史加載
-    try { await loadBackground(); } catch(e) {}
-    try { await loadHistory(); } catch(e) {}
-    
-    // 事件綁定
-    document.getElementById('search-input').addEventListener('keypress', (e) => e.key === 'Enter' && performSearch());
-    document.getElementById('quick-url').addEventListener('keypress', (e) => e.key === 'Enter' && quickPlay());
+    document.getElementById('search-keyword').addEventListener('keypress', e => e.key === 'Enter' && searchAll());
 });
 
 function initPlayer() {
@@ -48,12 +31,9 @@ function initPlayer() {
         url: '',
         type: 'm3u8',
         customType: {
-            m3u8: function (video, url) {
+            m3u8: (video, url) => {
                 if (Hls.isSupported()) {
-                    const hls = new Hls({
-                        maxBufferSize: 30 * 1024 * 1024,
-                        enableWorker: true
-                    });
+                    const hls = new Hls();
                     hls.loadSource(url);
                     hls.attachMedia(video);
                     art.on('destroy', () => hls.destroy());
@@ -66,149 +46,118 @@ function initPlayer() {
         fullscreen: true,
         playbackRate: true,
         setting: true,
-        hotkey: true,
         pip: true,
         theme: '#f97316',
     });
 }
 
-// 萬能解析播放
-async function quickPlay() {
-    const url = document.getElementById('quick-url').value.trim();
-    if (!url) return;
-    
-    const overlay = document.getElementById('player-overlay');
-    overlay.classList.remove('hidden');
-    overlay.style.opacity = "1";
-
-    setTimeout(() => {
-        art.switchUrl(url);
-        overlay.style.opacity = "0";
-        setTimeout(() => overlay.classList.add('hidden'), 500);
-        saveHistory("手動解析: " + url.substring(url.lastIndexOf('/') + 1), url);
-    }, 300);
+function toggleSidebar() {
+    const sb = document.getElementById('sidebar');
+    const icon = document.getElementById('collapse-icon');
+    const isCollapsed = sb.classList.toggle('sidebar-collapsed');
+    sb.classList.toggle('sidebar-expanded', !isCollapsed);
+    icon.style.transform = isCollapsed ? 'rotate(180deg)' : 'rotate(0deg)';
 }
 
-async function performSearch() {
-    const wd = document.getElementById('search-input').value.trim();
+function switchTab(tabId) {
+    document.querySelectorAll('.view').forEach(v => v.classList.add('hidden'));
+    document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+    
+    document.getElementById(`view-${tabId}`).classList.remove('hidden');
+    document.getElementById(`nav-${tabId}`).classList.add('active');
+}
+
+async function searchAll() {
+    const wd = document.getElementById('search-keyword').value.trim();
     if (!wd) return;
-    
-    const container = document.getElementById('search-results');
-    container.innerHTML = `<div class="col-span-full h-40 flex flex-col items-center justify-center gap-6">
-        <div class="w-12 h-12 border-4 border-orange-500 border-t-transparent rounded-full animate-spin"></div>
-        <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Searching Databases</p>
-    </div>`;
-    
-    const tasks = API_ENDPOINTS.map(api => 
-        fetch(`/api/proxy?url=${encodeURIComponent(api.url)}&wd=${encodeURIComponent(wd)}&ac=list`)
+
+    const grid = document.getElementById('results-grid');
+    grid.innerHTML = '<div class="col-span-full py-20 flex justify-center"><div class="loader"></div></div>';
+
+    const tasks = SOURCES.map(s => 
+        fetch(`/api/proxy?url=${encodeURIComponent(s.url)}&wd=${encodeURIComponent(wd)}&ac=list`)
         .then(res => res.json())
-        .then(d => d.list?.map(i => ({...i, source: api.name, apiUrl: api.url})) || [])
+        .then(d => d.list?.map(v => ({...v, api: s.url, sourceName: s.name})) || [])
         .catch(() => [])
     );
 
-    const results = await Promise.all(tasks);
-    const all = results.flat();
-    
-    if (!all.length) {
-        container.innerHTML = `<div class="col-span-full py-20 text-center text-gray-400 font-black tracking-tighter">找不到資源，請更換關鍵字</div>`;
-        return;
-    }
+    const all = (await Promise.all(tasks)).flat();
+    grid.innerHTML = all.length ? all.map(item => `
+        <div onclick="playVideo('${item.vod_id}', '${item.api}', '${item.vod_name}')" class="video-item">
+            <div class="aspect-[3/4] bg-white/20 rounded-2xl mb-3 flex items-center justify-center">
+                <svg class="w-8 h-8 text-white/40" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+            </div>
+            <h4 class="text-xs font-bold truncate">${item.vod_name}</h4>
+            <span class="text-[9px] font-black text-orange-600 bg-orange-100 px-2 py-0.5 rounded-md mt-2 inline-block">${item.sourceName}</span>
+        </div>
+    `).join('') : '<p class="col-span-full text-center py-20 opacity-40 font-bold">未找到資源</p>';
+}
 
-    container.innerHTML = all.map(item => `
-        <div onclick="playVideo('${item.vod_id}', '${item.apiUrl}', '${item.vod_name}')" class="bg-white/40 hover:bg-white p-5 rounded-[32px] border border-white/20 cursor-pointer transition-all duration-300 hover:shadow-2xl hover:-translate-y-1 active:scale-95 group">
-            <h4 class="font-bold text-gray-800 line-clamp-1 text-sm group-hover:text-orange-600 transition-colors">${item.vod_name}</h4>
-            <div class="flex justify-between items-center mt-4">
-                <span class="text-[9px] font-black bg-orange-100 text-orange-600 px-3 py-1 rounded-xl uppercase">${item.source}</span>
-                <span class="text-[10px] text-gray-400 font-bold">${item.vod_remarks || 'HD'}</span>
+async function playVideo(id, api, name) {
+    document.getElementById('player-loading').classList.remove('hidden');
+    try {
+        const res = await fetch(`/api/proxy?url=${encodeURIComponent(api)}&ids=${id}&ac=detail`);
+        const data = await res.json();
+        const vod = data.list[0];
+        const playUrl = vod.vod_play_url.split('#').find(s => s.includes('m3u8'))?.split('$')[1] || vod.vod_play_url.split('$')[1];
+        
+        art.switchUrl(playUrl);
+        saveHistory(name, playUrl);
+    } catch (e) { console.error(e); }
+    finally { document.getElementById('player-loading').classList.add('hidden'); }
+}
+
+function handleQuickPlay() {
+    const url = document.getElementById('quick-url').value.trim();
+    if(url) {
+        art.switchUrl(url);
+        saveHistory("外部連結", url);
+    }
+}
+
+// D1 存儲功能
+async function saveHistory(name, url) {
+    await fetch('/api/history', { 
+        method: 'POST', 
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, url, time: Date.now() }) 
+    });
+    loadHistory();
+}
+
+async function loadHistory() {
+    const res = await fetch('/api/history');
+    const data = await res.json();
+    document.getElementById('history-grid').innerHTML = data.map(item => `
+        <div onclick="art.switchUrl('${item.url}')" class="bg-white/40 p-5 rounded-3xl flex justify-between items-center group cursor-pointer hover:bg-white transition-all">
+            <div class="min-w-0 flex-1">
+                <p class="font-bold text-sm truncate">${item.name}</p>
+                <p class="text-[10px] text-gray-400 mt-1 uppercase font-black">History</p>
+            </div>
+            <div class="w-8 h-8 bg-orange-500 rounded-full flex items-center justify-center text-white opacity-0 group-hover:opacity-100 transition-all">
+                <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
             </div>
         </div>
     `).join('');
 }
 
-async function playVideo(id, api, name) {
-    try {
-        const overlay = document.getElementById('player-overlay');
-        overlay.classList.remove('hidden');
-        overlay.style.opacity = "1";
-        
-        const res = await fetch(`/api/proxy?url=${encodeURIComponent(api)}&ids=${id}&ac=detail`);
-        const data = await res.json();
-        
-        if (!data.list?.[0]) throw new Error();
-        
-        const rawUrl = data.list[0].vod_play_url;
-        const best = rawUrl.split('#').find(s => s.toLowerCase().includes('m3u8')) || rawUrl.split('#')[0];
-        const url = best.includes('$') ? best.split('$')[1] : best;
-
-        art.switchUrl(url.trim());
-        overlay.style.opacity = "0";
-        setTimeout(() => overlay.classList.add('hidden'), 500);
-        
-        saveHistory(name, url.trim());
-    } catch (e) {
-        alert("播放解析失敗");
-        document.getElementById('player-overlay').classList.add('hidden');
-    }
-}
-
-// UI 切換邏輯
-function toggleSidebar() {
-    const sb = document.getElementById('nav-sidebar');
-    const isClosed = sb.classList.contains('w-20');
-    sb.classList.toggle('w-20', !isClosed);
-    sb.classList.toggle('w-80', isClosed);
-    document.getElementById('sidebar-icon').style.transform = isClosed ? "rotate(0deg)" : "rotate(180deg)";
-}
-
-function switchTab(id) {
-    document.querySelectorAll('.tab-content').forEach(c => c.classList.add('hidden'));
-    document.querySelectorAll('.nav-item').forEach(n => {
-        n.classList.remove('bg-white', 'shadow-sm', 'text-orange-600');
-        n.classList.add('hover:bg-white/40', 'text-gray-500');
-    });
-    
-    document.getElementById('tab-' + id).classList.remove('hidden');
-    const activeBtn = document.getElementById('btn-' + id);
-    activeBtn.classList.add('bg-white', 'shadow-sm', 'text-orange-600');
-    activeBtn.classList.remove('hover:bg-white/40', 'text-gray-500');
-}
-
-function toggleSettings() { document.getElementById('bg-modal').classList.toggle('hidden'); }
-
-// 儲存與同步
-async function saveHistory(name, url) { try { await fetch('/api/history', { method: 'POST', body: JSON.stringify({ name, url }) }); loadHistory(); } catch(e){} }
-async function loadHistory() {
-    try {
-        const res = await fetch('/api/history');
-        const data = await res.json();
-        document.getElementById('history-list').innerHTML = data.map(i => `
-            <div onclick="art.switchUrl('${i.url}')" class="bg-white/40 hover:bg-white p-6 rounded-[32px] cursor-pointer transition-all border border-white/20 group flex items-center justify-between">
-                <span class="text-sm font-bold truncate pr-4 text-gray-700">${i.name}</span>
-                <div class="w-10 h-10 bg-orange-500/10 rounded-2xl flex items-center justify-center group-hover:bg-orange-500 group-hover:text-white transition-all text-orange-500">
-                    <svg class="w-5 h-5 fill-current" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"></path></svg>
-                </div>
-            </div>
-        `).join('');
-    } catch(e){}
-}
-async function uploadBackground() {
-    const file = document.getElementById('bg-upload').files[0];
+// KV 背景功能
+function triggerBgUpload() { document.getElementById('bg-input').click(); }
+function uploadBackground(e) {
+    const file = e.target.files[0];
     const reader = new FileReader();
-    reader.onload = async (e) => {
-        document.body.style.backgroundImage = `url(${e.target.result})`;
-        document.body.style.backgroundSize = "cover";
-        try { await fetch('/api/background', { method: 'POST', body: JSON.stringify({ image: e.target.result }) }); } catch(e){}
-        toggleSettings();
+    reader.onload = async (event) => {
+        const base64 = event.target.result;
+        setBg(base64);
+        await fetch('/api/background', { method: 'POST', body: JSON.stringify({ image: base64 }) });
     };
     reader.readAsDataURL(file);
 }
-async function loadBackground() {
-    try {
-        const r = await (await fetch('/api/background')).json();
-        if(r.image) {
-            document.body.style.backgroundImage = `url(${r.image})`;
-            document.body.style.backgroundSize = "cover";
-        }
-    } catch(e){}
+
+function setBg(img) { document.getElementById('app-bg').style.backgroundImage = `url(${img})`; document.getElementById('app-bg').style.backgroundSize = "cover"; }
+async function initTheme() {
+    const r = await fetch('/api/background');
+    const d = await r.json();
+    if(d.image) setBg(d.image);
 }
 
