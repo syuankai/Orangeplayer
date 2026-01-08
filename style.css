@@ -1,100 +1,73 @@
-/* 基礎樣式與動態背景 */
+@import url('https://fonts.googleapis.com/css2?family=SF+Pro+Display:wght@400;600;800&display=swap');
+
 body {
-    background-color: #f8fafc;
-    /* 預設背景：柔和的流體漸變 */
-    background: linear-gradient(135deg, #e0e7ff 0%, #fae8ff 50%, #ffedd5 100%);
-    color: #1e293b;
-    font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-    transition: background 0.8s ease;
+    background-color: #f5f5f7;
+    background-image: linear-gradient(135deg, #e3e3e8 0%, #f5f5f7 100%);
+    font-family: 'SF Pro Display', -apple-system, sans-serif;
+    color: #1d1d1f;
 }
 
-/* 極致透明毛玻璃效果 (Apple 風格) */
+/* Apple Pro 毛玻璃 */
 .glass-effect {
-    /* 降低不透明度至 0.15~0.2，營造超薄透明感 */
-    background: rgba(255, 255, 255, 0.15); 
-    /* 增加模糊強度與飽和度 */
-    backdrop-filter: blur(55px) saturate(220%) brightness(1.05);
-    -webkit-backdrop-filter: blur(55px) saturate(220%) brightness(1.05);
-    /* 極細邊框，模擬光澤邊緣 */
-    border: 1px solid rgba(255, 255, 255, 0.25);
-    box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.07);
-}
-
-/* 側邊欄專用透明度 (更透) */
-#nav-sidebar {
-    background: rgba(255, 255, 255, 0.1);
-    backdrop-filter: blur(60px) saturate(250%);
-}
-
-/* 導覽按鈕選中態 */
-.nav-item {
-    color: #475569;
-    font-weight: 500;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.nav-item:hover {
-    background: rgba(255, 255, 255, 0.3);
-    color: #f97316;
-}
-
-.nav-item.active {
-    /* 選中時保持半透明但帶有色彩傾向 */
-    background: rgba(249, 115, 22, 0.8);
-    color: white;
-    box-shadow: 0 4px 15px rgba(249, 115, 22, 0.4);
-}
-
-/* 搜尋輸入框 - 超透明 */
-#search-input {
-    background: rgba(255, 255, 255, 0.1);
-    border: 1px solid rgba(255, 255, 255, 0.3);
-    backdrop-filter: blur(10px);
-    color: #1e293b;
-}
-
-#search-input::placeholder {
-    color: #94a3b8;
-}
-
-/* 搜尋結果卡片 - 懸浮感 */
-.search-card {
     background: rgba(255, 255, 255, 0.2);
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    transition: all 0.3s ease;
+    backdrop-filter: blur(40px) saturate(200%) brightness(1.1);
+    -webkit-backdrop-filter: blur(40px) saturate(200%) brightness(1.1);
+    border: 1px solid rgba(255, 255, 255, 0.4);
 }
 
-.search-card:hover {
+/* 導航按鈕 */
+.nav-item {
+    color: #86868b;
+    transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.nav-item:hover {
     background: rgba(255, 255, 255, 0.4);
-    transform: translateY(-2px);
-    border-color: rgba(249, 115, 22, 0.5);
+    color: #000;
+}
+.nav-item.active {
+    background: #fff;
+    color: #f97316;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.06);
+    transform: scale(1.02);
 }
 
-/* 滾動條隱藏或極簡 */
-::-webkit-scrollbar {
-    width: 4px;
+/* 側邊欄收縮動畫 */
+.w-20 .nav-text, .w-20 #logo-text, .w-20 .nav-text, .w-20 #sidebar-icon, .w-20 .bg-white\/30 {
+    display: none;
 }
-::-webkit-scrollbar-track {
-    background: transparent;
-}
-::-webkit-scrollbar-thumb {
-    background: rgba(0, 0, 0, 0.1);
-    border-radius: 10px;
+.w-20 .nav-item {
+    justify-content: center;
 }
 
-/* 隱藏文字（側邊欄收縮動畫） */
-.w-20 .nav-text, .w-20 #logo-text {
-    opacity: 0;
-    width: 0;
-    overflow: hidden;
-    pointer-events: none;
-}
+/* 滾動條 */
+::-webkit-scrollbar { width: 0; }
 
-/* 響應式優化：手機端背景不宜太透，增加一點白 */
+/* 響應式佈局手機優化 */
 @media (max-width: 768px) {
-    .glass-effect {
-        background: rgba(255, 255, 255, 0.5);
-        backdrop-filter: blur(20px);
+    #nav-sidebar {
+        position: fixed;
+        bottom: 1.5rem;
+        left: 1rem;
+        right: 1rem;
+        height: 70px;
+        width: auto !important;
+        flex-direction: row;
+        border-radius: 28px;
+        padding: 0 1rem;
     }
+    #nav-sidebar nav {
+        flex-direction: row;
+        width: 100%;
+        margin: 0;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    #nav-sidebar .nav-item {
+        padding: 0.8rem;
+    }
+    #nav-sidebar .nav-text, #nav-sidebar #logo-text, #nav-sidebar .border-t, #nav-sidebar .mb-4 {
+        display: none;
+    }
+    main { height: calc(100% - 100px); }
 }
 
