@@ -1,36 +1,100 @@
-/* 預設抽象亮色純色背景 */
+/* 基礎樣式與動態背景 */
 body {
-    background-color: #f3f4f6;
-    background-image: radial-gradient(at 0% 0%, hsla(253,16%,7%,1) 0, transparent 50%), 
-                      radial-gradient(at 50% 0%, hsla(225,39%,30%,1) 0, transparent 50%), 
-                      radial-gradient(at 100% 0%, hsla(339,49%,30%,1) 0, transparent 50%);
-    background-image: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
-    color: #1f2937;
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background-color: #f8fafc;
+    /* 預設背景：柔和的流體漸變 */
+    background: linear-gradient(135deg, #e0e7ff 0%, #fae8ff 50%, #ffedd5 100%);
+    color: #1e293b;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    transition: background 0.8s ease;
 }
 
-/* Apple 風格毛玻璃 */
+/* 極致透明毛玻璃效果 (Apple 風格) */
 .glass-effect {
-    background: rgba(255, 255, 255, 0.4);
-    backdrop-filter: blur(25px) saturate(180%);
-    -webkit-backdrop-filter: blur(25px) saturate(180%);
-    border: 1px solid rgba(255, 255, 255, 0.3);
+    /* 降低不透明度至 0.15~0.2，營造超薄透明感 */
+    background: rgba(255, 255, 255, 0.15); 
+    /* 增加模糊強度與飽和度 */
+    backdrop-filter: blur(55px) saturate(220%) brightness(1.05);
+    -webkit-backdrop-filter: blur(55px) saturate(220%) brightness(1.05);
+    /* 極細邊框，模擬光澤邊緣 */
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.07);
 }
 
-/* 滾動條美化 */
+/* 側邊欄專用透明度 (更透) */
+#nav-sidebar {
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(60px) saturate(250%);
+}
+
+/* 導覽按鈕選中態 */
+.nav-item {
+    color: #475569;
+    font-weight: 500;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.nav-item:hover {
+    background: rgba(255, 255, 255, 0.3);
+    color: #f97316;
+}
+
+.nav-item.active {
+    /* 選中時保持半透明但帶有色彩傾向 */
+    background: rgba(249, 115, 22, 0.8);
+    color: white;
+    box-shadow: 0 4px 15px rgba(249, 115, 22, 0.4);
+}
+
+/* 搜尋輸入框 - 超透明 */
+#search-input {
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    backdrop-filter: blur(10px);
+    color: #1e293b;
+}
+
+#search-input::placeholder {
+    color: #94a3b8;
+}
+
+/* 搜尋結果卡片 - 懸浮感 */
+.search-card {
+    background: rgba(255, 255, 255, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    transition: all 0.3s ease;
+}
+
+.search-card:hover {
+    background: rgba(255, 255, 255, 0.4);
+    transform: translateY(-2px);
+    border-color: rgba(249, 115, 22, 0.5);
+}
+
+/* 滾動條隱藏或極簡 */
 ::-webkit-scrollbar {
-    width: 6px;
+    width: 4px;
+}
+::-webkit-scrollbar-track {
+    background: transparent;
 }
 ::-webkit-scrollbar-thumb {
-    background: rgba(0,0,0,0.1);
+    background: rgba(0, 0, 0, 0.1);
     border-radius: 10px;
 }
 
-/* 響應式優化 */
+/* 隱藏文字（側邊欄收縮動畫） */
+.w-20 .nav-text, .w-20 #logo-text {
+    opacity: 0;
+    width: 0;
+    overflow: hidden;
+    pointer-events: none;
+}
+
+/* 響應式優化：手機端背景不宜太透，增加一點白 */
 @media (max-width: 768px) {
-    #sidebar {
-        border-left: none;
-        border-top: 1px solid rgba(255,255,255,0.3);
+    .glass-effect {
+        background: rgba(255, 255, 255, 0.5);
+        backdrop-filter: blur(20px);
     }
 }
 
