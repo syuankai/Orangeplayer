@@ -2,104 +2,137 @@
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>OrangePlayer - 聚合搜尋播放器</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>OrangePlayer | Pro Cinema</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="style.css">
     <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
     <script src="https://cdn.jsdelivr.net/npm/artplayer/dist/artplayer.js"></script>
 </head>
-<body class="bg-fixed bg-cover bg-center overflow-hidden h-screen transition-all duration-500" id="main-body">
-
-    <!-- 密碼驗證層 -->
-    <div id="auth-overlay" class="fixed inset-0 z-[100] hidden flex items-center justify-center bg-black/60 backdrop-blur-xl">
-        <div class="bg-white/20 p-8 rounded-3xl border border-white/30 shadow-2xl text-center backdrop-blur-md">
-            <h2 class="text-white text-2xl mb-4 font-bold">OrangePlayer 認證</h2>
-            <input type="password" id="site-password" class="bg-white/10 border border-white/20 rounded-xl px-4 py-2 text-white focus:outline-none focus:ring-2 ring-orange-400 mb-4 block w-full text-center">
-            <button onclick="verifyPassword()" class="bg-orange-500 hover:bg-orange-600 text-white px-8 py-2 rounded-xl transition-all">解鎖站點</button>
+<body class="bg-fixed bg-cover bg-center h-screen overflow-hidden select-none" id="main-body">
+    
+    <!-- 全屏加載層 -->
+    <div id="loading-screen" class="fixed inset-0 z-[200] bg-white flex items-center justify-center transition-opacity duration-700">
+        <div class="flex flex-col items-center">
+            <div class="w-12 h-12 border-4 border-orange-500 border-t-transparent rounded-full animate-spin mb-4"></div>
+            <p class="text-orange-500 font-bold tracking-widest text-sm uppercase">Initializing Studio</p>
         </div>
     </div>
 
-    <div class="flex h-full w-full relative">
-        <!-- 左側可收縮面板 -->
-        <aside id="nav-sidebar" class="w-64 flex-shrink-0 glass-effect border-r border-white/20 flex flex-col transition-all duration-300 z-50">
-            <div class="p-6 flex items-center justify-between">
-                <span id="logo-text" class="text-xl font-bold bg-gradient-to-r from-orange-500 to-red-500 bg-clip-text text-transparent">OrangePlayer</span>
-                <button onclick="toggleSidebar()" class="p-2 hover:bg-white/20 rounded-lg transition-colors">
-                    <svg id="sidebar-icon" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 19l-7-7 7-7m8 14l-7-7 7-7"></path></svg>
-                </button>
+    <div class="flex h-full w-full p-0 md:p-4 gap-4">
+        <!-- Apple 側邊欄 -->
+        <aside id="nav-sidebar" class="w-20 md:w-72 glass-effect rounded-[32px] border border-white/30 flex flex-col transition-all duration-500 ease-in-out z-50 overflow-hidden">
+            <div class="p-6 flex items-center gap-4">
+                <div class="w-10 h-10 bg-orange-500 rounded-xl flex-shrink-0 flex items-center justify-center shadow-lg shadow-orange-500/40">
+                    <span class="text-white font-black text-xl italic">O</span>
+                </div>
+                <span id="logo-text" class="text-xl font-bold tracking-tighter text-gray-800 whitespace-nowrap">OrangePlayer</span>
             </div>
 
-            <nav class="flex-1 px-4 space-y-2 overflow-y-auto">
-                <button onclick="switchTab('search')" class="nav-item active w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all">
-                    <span>🔍</span> <span class="nav-text">影視搜尋</span>
+            <!-- 解析模組 (側邊欄功能) -->
+            <div class="px-4 mb-4">
+                <div class="bg-white/30 rounded-2xl p-3 border border-white/40 nav-text">
+                    <p class="text-[10px] font-bold text-orange-600 mb-2 uppercase ml-1">Universal Parser</p>
+                    <div class="relative group">
+                        <input type="text" id="quick-url" placeholder="貼入 m3u8 網址..." class="w-full bg-white/40 border border-white/20 rounded-xl px-3 py-2 text-xs focus:outline-none focus:ring-2 ring-orange-500/30 transition-all pr-8">
+                        <button onclick="quickPlay()" class="absolute right-2 top-1/2 -translate-y-1/2 text-orange-600 hover:scale-110 transition-transform">
+                            <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path d="M10.293 3.293a1 1 0 011.414 0l6 6a1 1 0 010 1.414l-6 6a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-4.293-4.293a1 1 0 010-1.414z"/></svg>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <nav class="flex-1 px-3 space-y-1 overflow-y-auto">
+                <button onclick="switchTab('search')" class="nav-item active w-full flex items-center gap-4 px-4 py-3.5 rounded-2xl transition-all">
+                    <span class="text-xl">🎬</span> <span class="nav-text font-semibold">聚合搜尋</span>
                 </button>
-                <button onclick="switchTab('history')" class="nav-item w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all">
-                    <span>🕒</span> <span class="nav-text">播放歷史</span>
+                <button onclick="switchTab('history')" class="nav-item w-full flex items-center gap-4 px-4 py-3.5 rounded-2xl transition-all">
+                    <span class="text-xl">🕒</span> <span class="nav-text font-semibold">歷史紀錄</span>
                 </button>
-                <button onclick="document.getElementById('local-upload').click()" class="nav-item w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all">
-                    <span>📁</span> <span class="nav-text">本地上傳</span>
+                <button onclick="document.getElementById('local-upload').click()" class="nav-item w-full flex items-center gap-4 px-4 py-3.5 rounded-2xl transition-all">
+                    <span class="text-xl">📂</span> <span class="nav-text font-semibold">本地文件</span>
                     <input type="file" id="local-upload" hidden accept="video/*">
                 </button>
-                <button onclick="toggleSettings()" class="nav-item w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all">
-                    <span>🖼️</span> <span class="nav-text">背景設置</span>
+                <button onclick="toggleSettings()" class="nav-item w-full flex items-center gap-4 px-4 py-3.5 rounded-2xl transition-all">
+                    <span class="text-xl">⚙️</span> <span class="nav-text font-semibold">環境設置</span>
                 </button>
             </nav>
 
+            <!-- 狀態與縮放 -->
             <div class="p-4 border-t border-white/10">
-                <div class="text-[10px] text-gray-500 text-center uppercase tracking-widest nav-text">Powered by Cloudflare</div>
+                <div class="flex flex-col gap-1 px-2 mb-4 nav-text">
+                    <div class="flex justify-between text-[10px] text-gray-400">
+                        <span>DB Latency</span>
+                        <span id="d1-delay" class="text-green-600">--ms</span>
+                    </div>
+                    <div class="w-full bg-gray-200 h-1 rounded-full overflow-hidden">
+                        <div id="latency-bar" class="bg-green-500 h-full w-0 transition-all duration-500"></div>
+                    </div>
+                </div>
+                <button onclick="toggleSidebar()" class="hidden md:flex w-full bg-white/30 py-2.5 rounded-xl items-center justify-center hover:bg-white/50 transition-all shadow-inner">
+                    <svg id="sidebar-icon" class="w-4 h-4 text-gray-600 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
+                </button>
             </div>
         </aside>
 
-        <!-- 主內容區域 -->
-        <main class="flex-1 flex flex-col relative overflow-hidden">
-            <!-- 上方播放器區域 -->
-            <div class="flex-[3] p-4 md:p-6 flex flex-col gap-4 min-h-0">
-                <div class="flex-1 rounded-3xl overflow-hidden glass-effect border border-white/40 shadow-2xl relative">
-                    <div id="artplayer" class="w-full h-full"></div>
-                    <div id="player-placeholder" class="absolute inset-0 flex flex-col items-center justify-center text-gray-400 gap-4 pointer-events-none">
-                        <div class="w-16 h-16 bg-white/10 rounded-full flex items-center justify-center animate-pulse">▶</div>
-                        <p>選擇影片開始播放</p>
+        <!-- 主體內容 -->
+        <main class="flex-1 flex flex-col gap-4 min-w-0 h-full">
+            <!-- 播放器區塊 -->
+            <section class="h-[45%] md:h-[62%] w-full rounded-[32px] glass-effect border border-white/40 shadow-2xl relative overflow-hidden group">
+                <div id="artplayer" class="w-full h-full"></div>
+                <!-- 交互式佔位符 -->
+                <div id="player-placeholder" class="absolute inset-0 flex flex-col items-center justify-center text-gray-500/40 bg-white/10 backdrop-blur-3xl transition-all duration-1000">
+                    <div class="relative">
+                        <div class="absolute inset-0 bg-orange-500 blur-2xl opacity-20 animate-pulse"></div>
+                        <div class="w-24 h-24 rounded-full border border-gray-300 flex items-center justify-center relative bg-white/20">
+                            <span class="text-4xl translate-x-1">▶</span>
+                        </div>
                     </div>
+                    <p class="mt-6 font-bold tracking-[0.2em] text-xs uppercase opacity-50">Cinema Engine Ready</p>
                 </div>
-                <div id="current-info" class="glass-effect rounded-2xl px-6 py-3 text-sm font-medium flex items-center justify-between">
-                    <span id="video-title">等待播放內容...</span>
-                    <span id="player-status" class="text-orange-500 text-xs">READY</span>
-                </div>
-            </div>
+            </section>
 
-            <!-- 下方功能面板 -->
-            <div id="content-panel" class="flex-[2] glass-effect m-4 mt-0 rounded-3xl border border-white/30 flex flex-col overflow-hidden">
-                <!-- 搜尋 Tab -->
-                <div id="tab-search" class="tab-content h-full flex flex-col p-6">
-                    <div class="flex gap-2 mb-6">
-                        <input type="text" id="search-input" placeholder="請輸入電影或劇集名稱..." class="flex-1 bg-white/10 border border-white/20 rounded-2xl px-6 py-3 text-gray-800 focus:outline-none focus:ring-2 ring-orange-400 placeholder-gray-500">
-                        <button onclick="performSearch()" class="bg-orange-500 text-white px-8 rounded-2xl hover:bg-orange-600 transition-all font-bold">搜尋</button>
+            <!-- 控制/列表區塊 -->
+            <section class="flex-1 glass-effect rounded-[32px] border border-white/30 shadow-xl overflow-hidden flex flex-col">
+                <div id="tab-search" class="tab-content flex flex-col h-full p-6 md:p-8">
+                    <div class="flex gap-3 mb-6">
+                        <div class="flex-1 relative group">
+                            <input type="text" id="search-input" placeholder="輸入影片名稱..." class="w-full bg-white/20 border border-white/30 rounded-2xl px-6 py-4 text-lg focus:outline-none focus:ring-4 ring-orange-500/20 placeholder-gray-400 transition-all">
+                        </div>
+                        <button onclick="performSearch()" class="bg-orange-500 text-white px-8 rounded-2xl font-bold shadow-lg shadow-orange-500/20 hover:brightness-110 active:scale-95 transition-all">
+                            搜尋
+                        </button>
                     </div>
-                    <div id="search-results" class="flex-1 overflow-y-auto grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-                        <div class="col-span-full text-center py-20 text-gray-400">輸入關鍵字開始聚合搜尋</div>
+                    
+                    <div id="search-results" class="flex-1 overflow-y-auto grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-3 pb-4">
+                        <div class="col-span-full h-full flex flex-col items-center justify-center text-gray-300">
+                            <p class="text-sm tracking-widest">開始探索您的私人影院</p>
+                        </div>
                     </div>
                 </div>
 
-                <!-- 歷史 Tab -->
-                <div id="tab-history" class="tab-content h-full hidden p-6 overflow-y-auto">
-                    <h3 class="text-lg font-bold mb-4">最近觀看</h3>
-                    <div id="history-list" class="flex flex-col gap-2"></div>
+                <div id="tab-history" class="tab-content hidden h-full p-8 overflow-y-auto">
+                    <div class="flex items-center justify-between mb-8">
+                        <h3 class="text-2xl font-black text-gray-800 italic">HISTORY</h3>
+                        <div class="h-px flex-1 mx-6 bg-gray-200"></div>
+                    </div>
+                    <div id="history-list" class="grid grid-cols-1 md:grid-cols-2 gap-3"></div>
                 </div>
-            </div>
+            </section>
         </main>
     </div>
 
     <!-- 背景設置 Modal -->
-    <div id="bg-modal" class="fixed inset-0 z-[60] hidden flex items-center justify-center bg-black/40 backdrop-blur-sm">
-        <div class="glass-effect p-8 rounded-[40px] w-96 text-center border border-white/40 shadow-2xl">
-            <div class="text-3xl mb-4">🖼️</div>
-            <h3 class="text-xl font-bold mb-2">自定義背景</h3>
-            <p class="text-sm text-gray-500 mb-6">上傳一張你喜歡的照片作為背景</p>
-            <input type="file" id="bg-upload" class="hidden" accept="image/*" onchange="uploadBackground()">
-            <div class="flex flex-col gap-2">
-                <button onclick="document.getElementById('bg-upload').click()" class="bg-orange-500 text-white px-4 py-3 rounded-2xl font-bold">選擇照片</button>
-                <button onclick="toggleSettings()" class="bg-white/20 px-4 py-3 rounded-2xl text-gray-700">取消</button>
+    <div id="bg-modal" class="fixed inset-0 z-[100] hidden flex items-center justify-center bg-black/10 backdrop-blur-xl">
+        <div class="glass-effect p-10 rounded-[48px] w-[420px] border border-white/50 shadow-2xl">
+            <h3 class="text-2xl font-bold text-gray-800 mb-6 text-center">Studio Customize</h3>
+            <div class="space-y-4">
+                <div class="p-6 bg-white/30 rounded-3xl border border-white/20">
+                    <p class="text-sm text-gray-600 mb-4 text-center">更改您的工作空間背景圖</p>
+                    <button onclick="document.getElementById('bg-upload').click()" class="w-full bg-gray-900 text-white py-4 rounded-2xl font-bold hover:bg-black transition-all">上傳圖片</button>
+                </div>
+                <button onclick="toggleSettings()" class="w-full py-4 text-gray-500 font-bold">返回播放器</button>
+                <input type="file" id="bg-upload" hidden accept="image/*" onchange="uploadBackground()">
             </div>
         </div>
     </div>
