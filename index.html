@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OrangePlayer - 聚合影視</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="style.css">
+    <!-- ArtPlayer & Hls.js -->
+    <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+    <script src="https://cdn.jsdelivr.net/npm/artplayer/dist/artplayer.js"></script>
+</head>
+<body class="bg-fixed bg-cover bg-center transition-all duration-500" id="main-body">
+    
+    <!-- 密碼驗證層 (隱藏) -->
+    <div id="auth-overlay" class="fixed inset-0 z-[100] hidden flex items-center justify-center bg-black/60 backdrop-blur-xl">
+        <div class="bg-white/20 p-8 rounded-3xl border border-white/30 shadow-2xl text-center backdrop-blur-md">
+            <h2 class="text-white text-2xl mb-4 font-bold">請輸入密碼</h2>
+            <input type="password" id="site-password" class="bg-white/10 border border-white/20 rounded-xl px-4 py-2 text-white focus:outline-none focus:ring-2 ring-orange-400 mb-4 block w-full">
+            <button onclick="verifyPassword()" class="bg-orange-500 hover:bg-orange-600 text-white px-6 py-2 rounded-xl transition-all">進入網站</button>
+        </div>
+    </div>
+
+    <div class="min-h-screen flex flex-col md:flex-row">
+        <!-- 左側主播放區 -->
+        <main class="flex-1 p-4 md:p-8 flex flex-col gap-4">
+            <!-- 搜尋欄 -->
+            <div class="glass-effect rounded-2xl p-2 flex items-center gap-2">
+                <input type="text" id="search-input" placeholder="搜尋電影、劇集..." class="flex-1 bg-transparent border-none px-4 py-2 text-gray-800 placeholder-gray-500 focus:outline-none">
+                <button onclick="performSearch()" class="bg-orange-500 text-white px-6 py-2 rounded-xl font-medium hover:bg-orange-600 transition-all">搜尋</button>
+            </div>
+
+            <!-- 播放器容器 -->
+            <div class="relative flex-1 min-h-[300px] md:min-h-[500px] rounded-3xl overflow-hidden border border-white/40 shadow-2xl glass-effect">
+                <div id="artplayer" class="w-full h-full"></div>
+                <!-- 初始狀態文字 -->
+                <div id="player-placeholder" class="absolute inset-0 flex items-center justify-center text-gray-500 pointer-events-none">
+                    請從右側選擇影片或上傳本地檔案
+                </div>
+            </div>
+
+            <!-- 底部控制/資訊 -->
+            <div class="glass-effect rounded-2xl p-4 flex flex-wrap gap-4 items-center justify-between">
+                <div class="flex gap-2">
+                    <label class="cursor-pointer bg-white/40 hover:bg-white/60 px-4 py-2 rounded-xl text-sm transition-all border border-white/20">
+                        📁 上傳本地
+                        <input type="file" id="local-upload" hidden accept="video/*,audio/*">
+                    </label>
+                    <button onclick="toggleSettings()" class="bg-white/40 hover:bg-white/60 px-4 py-2 rounded-xl text-sm border border-white/20">⚙️ 背景設置</button>
+                </div>
+                <div id="video-info" class="text-sm font-medium text-gray-700">尚未播放內容</div>
+            </div>
+        </main>
+
+        <!-- 右側側邊欄 -->
+        <aside id="sidebar" class="w-full md:w-96 glass-effect border-l border-white/30 p-6 flex flex-col gap-6 overflow-y-auto max-h-screen">
+            <!-- 搜尋結果區 -->
+            <section>
+                <h3 class="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2">🔍 搜尋結果 <span id="search-count" class="text-xs bg-orange-100 text-orange-600 px-2 py-1 rounded-full">0</span></h3>
+                <div id="search-results" class="flex flex-col gap-3">
+                    <!-- 搜尋結果卡片 -->
+                </div>
+            </section>
+
+            <!-- 播放歷史區 -->
+            <section>
+                <h3 class="text-lg font-bold text-gray-800 mb-4">🕒 播放歷史</h3>
+                <div id="history-list" class="flex flex-col gap-2">
+                    <!-- 歷史紀錄 -->
+                </div>
+            </section>
+        </aside>
+    </div>
+
+    <!-- 背景設置 Modal -->
+    <div id="bg-modal" class="fixed inset-0 z-50 hidden flex items-center justify-center bg-black/40">
+        <div class="glass-effect p-8 rounded-3xl w-80 text-center">
+            <h3 class="text-xl font-bold mb-4">設置自定義背景</h3>
+            <input type="file" id="bg-upload" class="mb-4 text-sm" accept="image/*">
+            <div class="flex gap-2 justify-center">
+                <button onclick="uploadBackground()" class="bg-orange-500 text-white px-4 py-2 rounded-lg">上傳</button>
+                <button onclick="toggleSettings()" class="bg-gray-200 px-4 py-2 rounded-lg">取消</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
+
